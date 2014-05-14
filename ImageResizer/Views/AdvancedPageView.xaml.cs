@@ -33,6 +33,7 @@ namespace BriceLambson.ImageResizer.Views
             QualityValue.Content = AdvancedSettings.Default.QualityLevel + "%";
             QualitySlider.Value = AdvancedSettings.Default.QualityLevel;
             FileNameTextbox.Text = AdvancedSettings.Default.FileNameFormat;
+            KeepMetadata.IsChecked = AdvancedSettings.Default.KeepMetadata;
                    
             // Handlers
             QualitySlider.ValueChanged += Slider_ValueChanged;
@@ -65,6 +66,7 @@ namespace BriceLambson.ImageResizer.Views
             AdvancedSettings.Default.QualityLevel = Convert.ToInt32(QualitySlider.Value);
             if (RenamingService.IsFileformatCorrect(FileNameTextbox.Text.ToArray()))
                 AdvancedSettings.Default.FileNameFormat = FileNameTextbox.Text;
+            AdvancedSettings.Default.KeepMetadata = KeepMetadata.IsChecked.Value;
             AdvancedSettings.Default.Save();
             this.Close();
         }

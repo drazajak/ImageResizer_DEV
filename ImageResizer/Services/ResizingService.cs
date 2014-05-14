@@ -28,10 +28,11 @@ namespace BriceLambson.ImageResizer.Services
         private readonly int _qualityLevel;
         private readonly bool _shrinkOnly;
         private readonly bool _ignoreRotations;
+        private readonly bool _keepMetadata;
         private readonly ResizeSize _size;
         private readonly RenamingService _renamer;
 
-        public ResizingService(int qualityLevel, bool shrinkOnly, bool ignoreRotations, ResizeSize size, RenamingService renamer)
+        public ResizingService(int qualityLevel, bool shrinkOnly, bool ignoreRotations, bool keepMetadata, ResizeSize size, RenamingService renamer)
         {
             Debug.Assert(qualityLevel >= 1 && qualityLevel <= 100);
             Debug.Assert(size != null);
@@ -42,12 +43,14 @@ namespace BriceLambson.ImageResizer.Services
             _ignoreRotations = ignoreRotations;
             _size = size;
             _renamer = renamer;
+            _keepMetadata = keepMetadata;
         }
 
         public string Resize(string sourcePath)
         {
             Debug.Assert(!String.IsNullOrWhiteSpace(sourcePath));
 
+            BitmapMetadata originalMetadata;
             var encoderDefaulted = false;
             BitmapDecoder decoder;
 
@@ -56,10 +59,11 @@ namespace BriceLambson.ImageResizer.Services
                 // NOTE: Using BitmapCacheOption.OnLoad here will read the entire file into
                 //       memory which allows us to dispose of the file stream immediately
                 decoder = BitmapDecoder.Create(sourceStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                originalMetadata = decoder.Metadata;
             }
 
             var encoder = BitmapEncoder.Create(decoder.CodecInfo.ContainerFormat);
-
+ 
             try
             {
                 // NOTE: This will throw if the codec dose not support encoding
@@ -117,6 +121,8 @@ namespace BriceLambson.ImageResizer.Services
             {
                 // Save the final image
                 encoder.Save(destinationStream);
+                if (_keepMetadata)
+                    encoder.Metadata = originalMetadata;
             }
 
             // Move any existing file to the Recycle Bin
