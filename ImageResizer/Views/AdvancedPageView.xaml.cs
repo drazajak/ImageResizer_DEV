@@ -1,8 +1,10 @@
 ﻿using BriceLambson.ImageResizer.Properties;
+using BriceLambson.ImageResizer.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -30,14 +32,29 @@ namespace BriceLambson.ImageResizer.Views
             // Set value
             QualityValue.Content = AdvancedSettings.Default.QualityLevel + "%";
             QualitySlider.Value = AdvancedSettings.Default.QualityLevel;
-            
+            FileNameTextbox.Text = AdvancedSettings.Default.FileNameFormat;
+                   
             // Handlers
             QualitySlider.ValueChanged += Slider_ValueChanged;
             ListBox_Choose.SelectionChanged += ListBoxItem_Selected;
+            FileNameTextbox.TextChanged += FilenameFormatChanged;
             Save_Btn.Click += Save_Click;
             Cancel_Btn.Click += Cancel_Click;
+
+            // Init 
+            FilenameFormatChanged(null, null);
         }
 
+        private void FilenameFormatChanged(object sender, TextChangedEventArgs e)
+        {
+            char[] NewFilename = FileNameTextbox.Text.ToArray();
+
+            if (RenamingService.IsFileformatCorrect(NewFilename))
+                FileNameExample.Content = RenamingService.GetNewFilename(FileNameTextbox.Text, RenamingService.ReplacementItemsExample) + ".jpg";
+            else
+                FileNameExample.Content = "Unregular format";
+        }
+        
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             QualityValue.Content = Convert.ToInt32(QualitySlider.Value) + "%";      
@@ -45,7 +62,9 @@ namespace BriceLambson.ImageResizer.Views
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            AdvancedSettings.Default.QualityLevel = Convert.ToInt32(QualitySlider.Value);      
+            AdvancedSettings.Default.QualityLevel = Convert.ToInt32(QualitySlider.Value);
+            if (RenamingService.IsFileformatCorrect(FileNameTextbox.Text.ToArray()))
+                AdvancedSettings.Default.FileNameFormat = FileNameTextbox.Text;
             AdvancedSettings.Default.Save();
             this.Close();
         }
