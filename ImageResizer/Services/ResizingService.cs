@@ -49,8 +49,7 @@ namespace BriceLambson.ImageResizer.Services
         public string Resize(string sourcePath)
         {
             Debug.Assert(!String.IsNullOrWhiteSpace(sourcePath));
-
-            BitmapMetadata originalMetadata;
+            FileInfo metaInfo = new FileInfo(sourcePath);
             var encoderDefaulted = false;
             BitmapDecoder decoder;
 
@@ -59,7 +58,6 @@ namespace BriceLambson.ImageResizer.Services
                 // NOTE: Using BitmapCacheOption.OnLoad here will read the entire file into
                 //       memory which allows us to dispose of the file stream immediately
                 decoder = BitmapDecoder.Create(sourceStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                originalMetadata = decoder.Metadata;
             }
 
             var encoder = BitmapEncoder.Create(decoder.CodecInfo.ContainerFormat);
@@ -119,10 +117,22 @@ namespace BriceLambson.ImageResizer.Services
 
             using (var destinationStream = File.OpenWrite(destinationPath))
             {
-                // Save the final image
-                encoder.Save(destinationStream);
-                if (_keepMetadata)
-                    encoder.Metadata = originalMetadata;
+                // Save the final image       
+                encoder.Save(destinationStream);    
+            }
+
+            // Change metadata
+            if (_keepMetadata)
+            { 
+                FileInfo newInfo = new FileInfo(destinationPath);
+                newInfo.Attributes = metaInfo.Attributes;
+                newInfo.CreationTime = metaInfo.CreationTime;
+                newInfo.CreationTimeUtc = metaInfo.CreationTimeUtc;
+                newInfo.IsReadOnly = metaInfo.IsReadOnly;
+                newInfo.LastAccessTime = metaInfo.LastAccessTime;
+                newInfo.LastAccessTimeUtc = metaInfo.LastAccessTimeUtc;
+                newInfo.LastWriteTime = metaInfo.LastWriteTime;
+                newInfo.LastWriteTimeUtc = metaInfo.LastWriteTimeUtc;
             }
 
             // Move any existing file to the Recycle Bin
